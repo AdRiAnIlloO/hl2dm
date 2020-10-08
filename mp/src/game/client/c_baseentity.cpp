@@ -4195,13 +4195,13 @@ vec_t C_BaseEntity::GetLocalAnglesDim( int iDim ) const
 // Prevent these for now until hierarchy is properly networked
 void C_BaseEntity::SetLocalAngles( const QAngle& angles )
 {
-	// NOTE: The angle normalize is a little expensive, but we can save
-	// a bunch of time in interpolation if we don't have to invalidate everything
-	// and sometimes it's off by a normalization amount
-
-	// FIXME: The normalize caused problems in server code like momentary_rot_button that isn't
-	//        handling things like +/-180 degrees properly. This should be revisited.
-	//QAngle angleNormalize( AngleNormalize( angles.x ), AngleNormalize( angles.y ), AngleNormalize( angles.z ) );
+	// Safety check against NaN's or really huge numbers, and normalize as necessary
+	if (!IsEntityQAngleReasonable(angles))
+	{
+		// NOTE: The angle normalize is a little expensive, but we can save a bunch of time in interpolation
+		// if we don't have to invalidate everything and sometimes it's off by a normalization amount
+		const_cast<QAngle&>(angles).Init(AngleNormalize(angles.x), AngleNormalize(angles.y), AngleNormalize(angles.z));
+	}
 
 	if (m_angRotation != angles)
 	{
